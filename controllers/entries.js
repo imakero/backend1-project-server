@@ -10,7 +10,8 @@ entriesRouter.post("/", requireLogin, async (req, res) => {
   const { text } = req.body
   const { userId } = req.user
   const entry = new Entry({ text, author: userId })
-  res.sendStatus(200)
+  entry.save()
+  res.json(entry)
 })
 
 entriesRouter.get("/", async (req, res) => {
