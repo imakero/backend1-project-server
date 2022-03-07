@@ -17,7 +17,17 @@ const requireLogin = (req, res, next) => {
   }
 }
 
+const isAuthorized = (req, res, next) => {
+  const user = req.user
+  const { username } = req.params
+  if (user.username !== username) {
+    return res.sendStatus(401)
+  }
+  next()
+}
+
 module.exports = {
   authorizeUser,
   requireLogin,
+  isAuthorized,
 }

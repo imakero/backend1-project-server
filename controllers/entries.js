@@ -15,7 +15,7 @@ entriesRouter.post("/", requireLogin, async (req, res) => {
 })
 
 entriesRouter.get("/", async (req, res) => {
-  const entries = await Entry.find().populate("author")
+  const entries = await Entry.find().populate("author").sort({ createdAt: -1 })
   res.json(entries)
 })
 

@@ -1,7 +1,22 @@
 const { Router } = require("express")
-const { requireLogin } = require("../middleware/auth")
+const { requireLogin, isAuthorized } = require("../middleware/auth")
 const { Entry } = require("../models/entry")
 const { User } = require("../models/user")
+const multer = require("multer")
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: "./uploads",
+    filename: (req, file, cb) => {
+      cb(
+        null,
+        `${req.params.username}-profile-picture.${
+          file.originalname.split(".").slice(-1)[0]
+        }`
+      )
+    },
+  }),
+})
 
 const userRouter = Router()
 
@@ -12,20 +27,19 @@ userRouter.get("/:username", async (req, res) => {
   res.json({ user, entries })
 })
 
-userRouter.put("/:username", requireLogin, async (req, res) => {
-  const user = req.user
-  const { username } = req.params
-  if (user.username !== username) {
-    return res.sendStatus(401)
+userRouter.post(
+  "/:username",
+  isAuthorized,
+  upload.single("profileImage"),
+  async (req, res) => {
+    const { username } = req.params
+    const userToUpdate = await User.findOne({ username })
+    userToUpdate.profileImageUrl = `/uploads/${req.file.filename}`
+    userToUpdate.name = req.body.name
+    userToUpdate.email = req.body.email
+    userToUpdate.save()
+    res.json(userToUpdate)
   }
-
-  const userToUpdate = await User.findOne({ username })
-  const { email, name, profileImageUrl } = req.body
-  userToUpdate.email = email
-  userToUpdate.name = name
-  userToUpdate.profileImageUrl = profileImageUrl
-  userToUpdate.save()
-  res.json(userToUpdate)
-})
+)
 
 module.exports = userRouter
