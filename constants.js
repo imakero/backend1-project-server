@@ -1,3 +1,3 @@
-const HASHTAGS = /#([\p{L}-]+)/giu
+const HASHTAGS = /#([\p{L}\p{N}-]+)/giu
 
 module.exports = HASHTAGS

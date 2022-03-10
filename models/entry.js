@@ -26,8 +26,6 @@ entrySchema.pre("save", async function (next) {
     })
   )
 
-  console.log(this.tags)
-
   next()
 })
 
