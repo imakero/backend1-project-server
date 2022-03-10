@@ -10,12 +10,15 @@ entriesRouter.post("/", requireLogin, async (req, res) => {
   const { text } = req.body
   const { userId } = req.user
   const entry = new Entry({ text, author: userId })
-  entry.save()
+  await entry.save()
   res.json(entry)
 })
 
 entriesRouter.get("/", async (req, res) => {
-  const entries = await Entry.find().populate("author").sort({ createdAt: -1 })
+  const entries = await Entry.find()
+    .populate("author")
+    .populate("tags")
+    .sort({ createdAt: -1 })
   res.json(entries)
 })
 

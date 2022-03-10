@@ -13,9 +13,10 @@ const entrySchema = mongoose.Schema(
 
 entrySchema.pre("save", async function (next) {
   const tags = [...this.text.matchAll(HASHTAGS)].map((match) => match[1])
+  const uniqueTags = [...new Set(tags.map((tag) => tag.toLowerCase()))]
 
   this.tags = await Promise.all(
-    tags.map(async (tag) => {
+    uniqueTags.map(async (tag) => {
       const savedTag = await Tag.findOneAndUpdate(
         { text: tag },
         { $set: { text: tag } },
@@ -24,6 +25,8 @@ entrySchema.pre("save", async function (next) {
       return savedTag._id
     })
   )
+
+  console.log(this.tags)
 
   next()
 })
