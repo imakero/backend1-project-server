@@ -22,7 +22,9 @@ entriesRouter.get("/", async (req, res) => {
 entriesRouter.get("/:username", async (req, res) => {
   const { username } = req.params
   const user = await User.findOne({ username })
-  const entries = await Entry.find({ author: { $in: user.following } })
+  const entries = await Entry.find({
+    $or: [{ author: { $in: user.following } }, { author: req.user.userId }],
+  })
     .populate("author")
     .sort({ createdAt: -1 })
   res.json(entries)

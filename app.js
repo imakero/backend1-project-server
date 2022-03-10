@@ -7,6 +7,7 @@ const authRouter = require("./controllers/auth")
 const entriesRouter = require("./controllers/entries")
 const userRouter = require("./controllers/users")
 const uploadsRouter = require("./controllers/uploads")
+const tagsRouter = require("./controllers/tags")
 
 dotenv.config()
 
@@ -19,8 +20,10 @@ app.use(authorizeUser)
 
 app.use("/auth", authRouter)
 app.use("/entries", entriesRouter)
-app.use("/", userRouter)
 app.use("/uploads", uploadsRouter)
+app.use("/tags", tagsRouter)
+app.get("/favicon.ico", (_req, res) => res.sendStatus(404))
+app.use("/", userRouter)
 
 mongoose.connect("mongodb://localhost/backend1project")
 
