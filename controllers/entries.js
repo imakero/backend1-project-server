@@ -11,6 +11,18 @@ entriesRouter.post("/", requireLogin, async (req, res) => {
   const { userId } = req.user
   const entry = new Entry({ text, author: userId })
   await entry.save()
+  const savedEntry = await entry.populate("author")
+
+  const user = await User.findOne({ _id: userId })
+  const realtime = req.app.get("realtime")
+  const followerIds = user.followers.map((follower) => follower.toString())
+
+  const socketsToNotify = realtime.getSockets(followerIds)
+
+  socketsToNotify.forEach((socketId) => {
+    realtime.io.to(socketId).emit("newPost", savedEntry)
+  })
+  // console.log(socketsToNotify)
   res.json(entry)
 })
 
