@@ -21,80 +21,102 @@ const upload = multer({
 
 const userRouter = Router()
 
-userRouter.get("/:username", async (req, res) => {
-  const { username } = req.params
-  const user = await User.findOne({ username })
-  const entries = await Entry.find({ author: user._id })
-    .populate("author")
-    .sort({ createdAt: -1 })
-  res.json({ user, entries })
+userRouter.get("/:username", async (req, res, next) => {
+  try {
+    const { username } = req.params
+    const user = await User.findOne({ username })
+    const entries = await Entry.find({ author: user._id })
+      .populate("author")
+      .sort({ createdAt: -1 })
+    res.json({ user, entries })
+  } catch (error) {
+    next(error)
+  }
 })
 
-userRouter.post("/:username", isAuthorized, async (req, res) => {
-  const { username } = req.params
-  const userToUpdate = await User.findOne({ username })
-  const { name, email } = req.body
-  userToUpdate.name = name ? name : userToUpdate.name
-  userToUpdate.email = email ? email : userToUpdate.email
-  userToUpdate.save()
-  res.json(userToUpdate)
+userRouter.post("/:username", isAuthorized, async (req, res, next) => {
+  try {
+    const { username } = req.params
+    const userToUpdate = await User.findOne({ username })
+    const { name, email } = req.body
+    userToUpdate.name = name ? name : userToUpdate.name
+    userToUpdate.email = email ? email : userToUpdate.email
+    userToUpdate.save()
+    res.json(userToUpdate)
+  } catch (error) {
+    next(error)
+  }
 })
 
 userRouter.post(
   "/:username/profile-image",
   isAuthorized,
   upload.single("profileImage"),
-  async (req, res) => {
-    const { username } = req.params
-    const userToUpdate = await User.findOne({ username })
-    userToUpdate.profileImageUrl = `/uploads/${req.file.filename}`
-    userToUpdate.save()
-    res.json(userToUpdate)
+  async (req, res, next) => {
+    try {
+      const { username } = req.params
+      const userToUpdate = await User.findOne({ username })
+      userToUpdate.profileImageUrl = `/uploads/${
+        req.file.filename
+      }?lastmod=${Date.now()}`
+      userToUpdate.save()
+      res.json(userToUpdate)
+    } catch (error) {
+      next(error)
+    }
   }
 )
 
-userRouter.post("/:username/follow", requireLogin, async (req, res) => {
-  const { username } = req.params
-  const userToFollow = await User.findOne({ username })
+userRouter.post("/:username/follow", requireLogin, async (req, res, next) => {
+  try {
+    const { username } = req.params
+    const userToFollow = await User.findOne({ username })
 
-  if (userToFollow._id === req.user.userId) {
-    res.statusCode = 400
-    return res.json({ error: "A user cannot follow itself." })
-  }
-
-  await User.updateOne(
-    { username },
-    { $addToSet: { followers: mongoose.Types.ObjectId(req.user.userId) } }
-  )
-  await User.updateOne(
-    { _id: req.user.userId },
-    {
-      $addToSet: { following: userToFollow._id },
+    if (userToFollow._id === req.user.userId) {
+      res.statusCode = 400
+      return res.json({ error: "A user cannot follow itself." })
     }
-  )
-  res.sendStatus(200)
+
+    await User.updateOne(
+      { username },
+      { $addToSet: { followers: mongoose.Types.ObjectId(req.user.userId) } }
+    )
+    await User.updateOne(
+      { _id: req.user.userId },
+      {
+        $addToSet: { following: userToFollow._id },
+      }
+    )
+    res.sendStatus(200)
+  } catch (error) {
+    next(error)
+  }
 })
 
-userRouter.post("/:username/unfollow", requireLogin, async (req, res) => {
-  const { username } = req.params
-  const userToUnfollow = await User.findOne({ username })
+userRouter.post("/:username/unfollow", requireLogin, async (req, res, next) => {
+  try {
+    const { username } = req.params
+    const userToUnfollow = await User.findOne({ username })
 
-  if (userToUnfollow._id === req.user.userId) {
-    res.statusCode = 400
-    return res.json({ error: "A user cannot unfollow itself." })
-  }
-
-  await User.updateOne(
-    { username },
-    { $pull: { followers: mongoose.Types.ObjectId(req.user.userId) } }
-  )
-  await User.updateOne(
-    { _id: req.user.userId },
-    {
-      $pull: { following: userToUnfollow._id },
+    if (userToUnfollow._id === req.user.userId) {
+      res.statusCode = 400
+      return res.json({ error: "A user cannot unfollow itself." })
     }
-  )
-  res.sendStatus(200)
+
+    await User.updateOne(
+      { username },
+      { $pull: { followers: mongoose.Types.ObjectId(req.user.userId) } }
+    )
+    await User.updateOne(
+      { _id: req.user.userId },
+      {
+        $pull: { following: userToUnfollow._id },
+      }
+    )
+    res.sendStatus(200)
+  } catch (error) {
+    next(error)
+  }
 })
 
 module.exports = userRouter
