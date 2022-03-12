@@ -7,7 +7,7 @@ const mongoose = require("mongoose")
 
 const upload = multer({
   storage: multer.diskStorage({
-    destination: "./uploads",
+    destination: "./public/uploads",
     filename: (req, file, cb) => {
       cb(
         null,
@@ -24,7 +24,9 @@ const userRouter = Router()
 userRouter.get("/:username", async (req, res) => {
   const { username } = req.params
   const user = await User.findOne({ username })
-  const entries = await Entry.find({ author: user._id }).sort({ createdAt: -1 })
+  const entries = await Entry.find({ author: user._id })
+    .populate("author")
+    .sort({ createdAt: -1 })
   res.json({ user, entries })
 })
 
@@ -45,7 +47,7 @@ userRouter.post(
   async (req, res) => {
     const { username } = req.params
     const userToUpdate = await User.findOne({ username })
-    userToUpdate.profileImageUrl = `http://localhost:5000/uploads/${req.file.filename}`
+    userToUpdate.profileImageUrl = `/uploads/${req.file.filename}`
     userToUpdate.save()
     res.json(userToUpdate)
   }
