@@ -33,6 +33,7 @@ authRouter.post("/users", async (req, res, next) => {
     const { username, password } = req.body
     const user = new User({ username, password })
     await user.save()
+    res.statusCode = 201
     res.json({ username })
   } catch (error) {
     next(error)
