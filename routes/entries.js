@@ -1,13 +1,16 @@
 const { Router } = require("express")
 const mongoose = require("mongoose")
+const { catchErrors } = require("../catchErrors")
 const { requireLogin } = require("../middleware/auth")
 const { Entry } = require("../models/entry")
 const { User } = require("../models/user")
 
 const entriesRouter = Router()
 
-entriesRouter.post("/", requireLogin, async (req, res, next) => {
-  try {
+entriesRouter.post(
+  "/",
+  requireLogin,
+  catchErrors(async (req, res) => {
     const { text } = req.body
     const { userId } = req.user
     const entry = new Entry({ text, author: userId })
@@ -24,25 +27,23 @@ entriesRouter.post("/", requireLogin, async (req, res, next) => {
       realtime.io.to(socketId).emit("newPost", savedEntry)
     })
     res.json(entry)
-  } catch (error) {
-    next(error)
-  }
-})
+  })
+)
 
-entriesRouter.get("/", async (req, res, next) => {
-  try {
+entriesRouter.get(
+  "/",
+  catchErrors(async (req, res) => {
     const entries = await Entry.find()
       .populate("author")
       .populate("tags")
       .sort({ createdAt: -1 })
     res.json(entries)
-  } catch (error) {
-    next(error)
-  }
-})
+  })
+)
 
-entriesRouter.get("/:username", async (req, res, next) => {
-  try {
+entriesRouter.get(
+  "/:username",
+  catchErrors(async (req, res) => {
     const { username } = req.params
     const user = await User.findOne({ username })
     const entries = await Entry.find({
@@ -51,9 +52,7 @@ entriesRouter.get("/:username", async (req, res, next) => {
       .populate("author")
       .sort({ createdAt: -1 })
     res.json(entries)
-  } catch (error) {
-    next(error)
-  }
-})
+  })
+)
 
 module.exports = entriesRouter

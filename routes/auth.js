@@ -1,11 +1,13 @@
 const jwt = require("jsonwebtoken")
 const { Router } = require("express")
 const { User } = require("../models/user")
+const { catchErrors } = require("../catchErrors")
 
 const authRouter = Router()
 
-authRouter.post("/tokens", async (req, res, next) => {
-  try {
+authRouter.post(
+  "/tokens",
+  catchErrors(async (req, res) => {
     const { username, password } = req.body
     const user = await User.login(username, password)
 
@@ -23,21 +25,18 @@ authRouter.post("/tokens", async (req, res, next) => {
     } else {
       res.sendStatus(401)
     }
-  } catch (error) {
-    next(error)
-  }
-})
+  })
+)
 
-authRouter.post("/users", async (req, res, next) => {
-  try {
+authRouter.post(
+  "/users",
+  catchErrors(async (req, res) => {
     const { username, password } = req.body
     const user = new User({ username, password })
     await user.save()
     res.statusCode = 201
     res.json({ username })
-  } catch (error) {
-    next(error)
-  }
-})
+  })
+)
 
 module.exports = authRouter
